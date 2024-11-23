@@ -1,4 +1,4 @@
-# CryptoSnap Bot 📈
+# CryptoSnap Bot 
 
 A Telegram bot that provides real-time cryptocurrency prices and market trends with instant chart screenshots.
 
@@ -111,12 +111,52 @@ Before starting, you'll need:
    # Update package list and upgrade existing packages
    sudo apt update && sudo apt upgrade -y
 
-   # Install curl for downloading Node.js setup
+   # Install curl and Node.js
    sudo apt install -y curl
-
-   # Install Node.js
    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
    sudo apt install -y nodejs
+
+   # Install required dependencies for Puppeteer
+   sudo apt install -y \
+       gconf-service \
+       libasound2 \
+       libatk1.0-0 \
+       libc6 \
+       libcairo2 \
+       libcups2 \
+       libdbus-1-3 \
+       libexpat1 \
+       libfontconfig1 \
+       libgcc1 \
+       libgconf-2-4 \
+       libgdk-pixbuf2.0-0 \
+       libglib2.0-0 \
+       libgtk-3-0 \
+       libnspr4 \
+       libpango-1.0-0 \
+       libpangocairo-1.0-0 \
+       libstdc++6 \
+       libx11-6 \
+       libx11-xcb1 \
+       libxcb1 \
+       libxcomposite1 \
+       libxcursor1 \
+       libxdamage1 \
+       libxext6 \
+       libxfixes3 \
+       libxi6 \
+       libxrandr2 \
+       libxrender1 \
+       libxss1 \
+       libxtst6 \
+       ca-certificates \
+       fonts-liberation \
+       libappindicator1 \
+       libnss3 \
+       lsb-release \
+       xdg-utils \
+       wget \
+       libgbm1
 
    # Install Git and Chromium
    sudo apt install -y git chromium-browser
@@ -163,65 +203,84 @@ Before starting, you'll need:
    sudo npm install -g pm2
 
    # Create PM2 config file
-   nano ecosystem.config.js
+   nano ecosystem.config.cjs
    ```
    Add this content:
    ```javascript
    module.exports = {
      apps: [
        {
-         name: 'crypto-server',
-         script: 'server.js',
+         name: 'crypto-web',
+         script: './server.js',
          env: {
-           NODE_ENV: 'production'
-         }
+           NODE_ENV: 'production',
+           PORT: 3000
+         },
+         exec_mode: 'fork',
+         instances: 1,
+         node_args: '--experimental-specifier-resolution=node',
+         interpreter: 'node',
+         interpreter_args: '--es-module-specifier-resolution=node'
        },
        {
          name: 'crypto-bot',
-         script: 'telegram-bot.js',
+         script: './telegram-bot.js',
          env: {
            NODE_ENV: 'production'
-         }
+         },
+         exec_mode: 'fork',
+         instances: 1,
+         exp_backoff_restart_delay: 100,
+         node_args: '--experimental-specifier-resolution=node',
+         interpreter: 'node',
+         interpreter_args: '--es-module-specifier-resolution=node',
+         wait_ready: true,
+         kill_timeout: 3000
        }
      ]
    };
    ```
    Save and exit
 
-8. Start services with PM2:
+8. Build and start the services:
    ```bash
-   # Start both services
-   pm2 start ecosystem.config.js
+   # First build the frontend
+   npm run build
 
-   # Save PM2 config
+   # Stop any running processes
+   pm2 delete all
+
+   # Start both services using the config
+   pm2 start ecosystem.config.cjs
+
+   # Save the process list
    pm2 save
 
    # Set up PM2 to start on system boot
    pm2 startup
-   # Run the command that PM2 outputs
+   # Copy and run the command that PM2 outputs
    ```
 
-9. Configure firewall:
+9. Verify both services are running:
    ```bash
-   # Allow SSH and web server ports
-   sudo ufw allow ssh
-   sudo ufw allow 3000
+   # Check status
+   pm2 list
 
-   # Enable firewall
-   sudo ufw enable
+   # Check web server is responding
+   curl http://localhost:3000
+
+   # Check logs
+   pm2 logs
    ```
 
-10. Monitor your services:
+10. If you need to restart services:
     ```bash
-    # View all logs
-    pm2 logs
+    # Restart all services
+    pm2 restart all
 
-    # View specific service logs
-    pm2 logs crypto-bot
-    pm2 logs crypto-server
-
-    # Monitor processes
-    pm2 monit
+    # Or restart individual services
+    pm2 restart crypto-web
+    pm2 restart crypto-bot
     ```
 
 ## Troubleshooting

@@ -179,10 +179,4 @@ app.get('*', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log('Starting Telegram bot...');
-    
-    // Import and start the Telegram bot
-    import('./telegram-bot.js').catch(err => {
-        console.error('Failed to start Telegram bot:', err);
-    });
 });

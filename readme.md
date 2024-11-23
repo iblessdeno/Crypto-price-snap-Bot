@@ -167,15 +167,11 @@ Before starting, you'll need:
    # Create projects directory if it doesn't exist
    mkdir -p ~/projects
    cd ~/projects
-<<<<<<< HEAD
-   
+
    # Clone the repository
    git clone https://github.com/iblessdeno/Crypto-price-snap-Bot.git
-   
+
    # Navigate to the correct directory (note: use the exact repository name)
-=======
-   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot
->>>>>>> 3a5b2970e1db870b9aa9cad068fb6355a2ea935e
    cd Crypto-price-snap-Bot
    ```
 
@@ -289,77 +285,188 @@ Before starting, you'll need:
 
 ## Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
 
-1. Screenshot errors:
+1. **Puppeteer/Screenshot Issues**:
+
+   Error: `Failed to launch the browser process! ... libatk-1.0.so.0: cannot open shared object file`
    ```bash
-   # Check if Chromium is installed
+   # Install ALL required dependencies (crucial for Puppeteer)
+   sudo apt install -y \
+       gconf-service \
+       libasound2 \
+       libatk1.0-0 \
+       libc6 \
+       libcairo2 \
+       libcups2 \
+       libdbus-1-3 \
+       libexpat1 \
+       libfontconfig1 \
+       libgcc1 \
+       libgconf-2-4 \
+       libgdk-pixbuf2.0-0 \
+       libglib2.0-0 \
+       libgtk-3-0 \
+       libnspr4 \
+       libpango-1.0-0 \
+       libpangocairo-1.0-0 \
+       libstdc++6 \
+       libx11-6 \
+       libx11-xcb1 \
+       libxcb1 \
+       libxcomposite1 \
+       libxcursor1 \
+       libxdamage1 \
+       libxext6 \
+       libxfixes3 \
+       libxi6 \
+       libxrandr2 \
+       libxrender1 \
+       libxss1 \
+       libxtst6 \
+       ca-certificates \
+       fonts-liberation \
+       libappindicator1 \
+       libnss3 \
+       lsb-release \
+       xdg-utils \
+       wget \
+       libgbm1
+
+   # Verify Chromium installation
    which chromium-browser
-
-   # If not installed, install it
-   sudo apt install -y chromium-browser
-
-   # Check Puppeteer logs
-   pm2 logs crypto-bot
    ```
 
-2. Bot not responding:
+2. **Telegram Bot Conflicts**:
+
+   Error: `409 Conflict: terminated by other getUpdates request`
    ```bash
-   # Check bot process
-   pm2 list
+   # Stop all PM2 processes
+   pm2 delete all
 
-   # View bot logs
-   pm2 logs crypto-bot
+   # Ensure server.js doesn't start the bot
+   # Remove any bot initialization from server.js
 
-   # Restart bot if needed
-   pm2 restart crypto-bot
+   # Start services in correct order
+   pm2 start ecosystem.config.cjs
    ```
 
-3. Server issues:
+3. **Node.js ES Modules Issues**:
+
+   Error: `Error [ERR_REQUIRE_ESM]: require() of ES Module ... not supported`
+   ```bash
+   # Use .cjs extension for PM2 config
+   mv ecosystem.config.js ecosystem.config.cjs
+
+   # Add proper Node.js flags in PM2 config
+   node_args: '--experimental-specifier-resolution=node'
+   interpreter_args: '--es-module-specifier-resolution=node'
+   ```
+
+4. **Server Connection Issues**:
+
+   Error: `net::ERR_CONNECTION_REFUSED at http://localhost:3000`
    ```bash
    # Check if server is running
    pm2 list
+   curl http://localhost:3000
 
    # Check server logs
-   pm2 logs crypto-server
+   pm2 logs crypto-web
 
-   # Check if port 3000 is in use
+   # Verify port is available
    sudo lsof -i :3000
+
+   # Restart web server if needed
+   pm2 restart crypto-web
    ```
 
-4. Permission issues:
+5. **Permission Issues**:
+
+   Error: `EACCES: permission denied`
    ```bash
    # Fix npm permissions
    sudo chown -R $USER:$USER ~/.npm
    sudo chown -R $USER:$USER ~/projects/Crypto-price-snap-Bot
+
+   # Fix PM2 permissions if needed
+   sudo chown -R $USER:$USER ~/.pm2
    ```
 
-### Maintenance
+### Best Practices
 
-1. Update bot:
+1. **Clean Start**:
    ```bash
-   # Pull latest changes
-   git pull
+   # Always start with a clean slate
+   pm2 delete all
+   killall node  # If needed
+   ```
 
-   # Install dependencies
-   npm install
-
-   # Rebuild frontend
+2. **Proper Process Order**:
+   ```bash
+   # Build first
    npm run build
 
-   # Restart services
-   pm2 restart all
+   # Start services
+   pm2 start ecosystem.config.cjs
+
+   # Verify both are running
+   pm2 list
    ```
 
-2. View resource usage:
+3. **Log Monitoring**:
    ```bash
+   # Monitor all logs
+   pm2 logs
+
+   # Monitor specific service
+   pm2 logs crypto-web
+   pm2 logs crypto-bot
+   ```
+
+4. **Process Management**:
+   ```bash
+   # Save process list after changes
+   pm2 save
+
+   # Set up startup script
+   pm2 startup
+   # Run the command PM2 outputs
+
+   # Monitor resources
    pm2 monit
    ```
 
-3. Backup .env:
+### Quick Recovery Steps
+
+If the bot stops working:
+
+1. Check logs for errors:
    ```bash
-   # Create backup
-   cp .env .env.backup
+   pm2 logs
+   ```
+
+2. Restart services:
+   ```bash
+   pm2 restart all
+   ```
+
+3. If issues persist:
+   ```bash
+   # Full reset
+   pm2 delete all
+   npm run build
+   pm2 start ecosystem.config.cjs
+   pm2 save
+   ```
+
+4. Verify environment:
+   ```bash
+   # Check Node.js version
+   node --version
+
+   # Verify environment variables
+   pm2 env crypto-bot
    ```
 
 ## License

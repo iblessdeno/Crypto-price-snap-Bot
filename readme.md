@@ -283,6 +283,43 @@ Before starting, you'll need:
     pm2 restart crypto-bot
     ```
 
+## Updating from GitHub
+
+To update your VPS with the latest changes:
+
+```bash
+# Stop all processes
+pm2 delete all
+
+# Pull latest changes
+cd ~/projects/Crypto-price-snap-Bot
+git pull origin main
+
+# Install dependencies and build
+npm install
+npm run build
+
+# Start services
+pm2 start ecosystem.config.cjs
+
+# Save process list
+pm2 save
+```
+
+If you encounter any issues after updating:
+```bash
+# Check the logs for errors
+pm2 logs
+
+# If needed, do a full reset
+pm2 delete all
+killall node
+npm install
+npm run build
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
 ## Troubleshooting
 
 ### Common Issues and Solutions

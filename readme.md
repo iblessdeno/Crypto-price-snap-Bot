@@ -122,12 +122,17 @@ Before starting, you'll need:
    sudo apt install -y git chromium-browser
    ```
 
-3. Create project directory and clone repository:
+3. Clone and navigate to the repository:
    ```bash
+   # Create projects directory if it doesn't exist
    mkdir -p ~/projects
    cd ~/projects
-   git clone [repository-url]
-   cd pybot
+   
+   # Clone the repository
+   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot.git
+   
+   # Navigate to the correct directory (note: use the exact repository name)
+   cd Crypto-price-snap-Bot
    ```
 
 4. Install project dependencies:

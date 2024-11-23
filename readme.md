@@ -60,8 +60,8 @@ Before starting, you'll need:
 
 3. Clone the repository:
    ```bash
-   git clone [repository-url]
-   cd pybot
+   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot
+   cd Crypto-price-snap-Bot
    ```
 
 4. Install project dependencies:
@@ -167,11 +167,15 @@ Before starting, you'll need:
    # Create projects directory if it doesn't exist
    mkdir -p ~/projects
    cd ~/projects
+<<<<<<< HEAD
    
    # Clone the repository
    git clone https://github.com/iblessdeno/Crypto-price-snap-Bot.git
    
    # Navigate to the correct directory (note: use the exact repository name)
+=======
+   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot
+>>>>>>> 3a5b2970e1db870b9aa9cad068fb6355a2ea935e
    cd Crypto-price-snap-Bot
    ```
 
@@ -327,7 +331,7 @@ Before starting, you'll need:
    ```bash
    # Fix npm permissions
    sudo chown -R $USER:$USER ~/.npm
-   sudo chown -R $USER:$USER ~/projects/pybot
+   sudo chown -R $USER:$USER ~/projects/Crypto-price-snap-Bot
    ```
 
 ### Maintenance

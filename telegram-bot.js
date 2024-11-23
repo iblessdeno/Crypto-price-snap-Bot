@@ -67,7 +67,16 @@ async function initBrowser() {
     try {
         browser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920x1080'
+            ],
+            protocolTimeout: 60000, // Increase protocol timeout to 60 seconds
+            timeout: 60000 // Increase overall timeout to 60 seconds
         });
         browserInitialized = true;
         console.log('Browser initialized successfully');
@@ -84,72 +93,82 @@ async function takeScreenshot(symbol) {
     
     console.log(`Taking screenshot for symbol: ${symbol}`);
     let page = null;
+    let retries = 3; // Add retry mechanism
     
-    try {
-        page = await browser.newPage();
-        
-        console.log('Setting viewport...');
-        await page.setViewport({ 
-            width: 1200,  
-            height: 800,  
-            deviceScaleFactor: 2  
-        });
-        
-        const url = `http://localhost:3000?symbol=${encodeURIComponent(symbol)}`;
-        console.log('Navigating to:', url);
+    while (retries > 0) {
+        try {
+            page = await browser.newPage();
+            
+            console.log('Setting viewport...');
+            await page.setViewport({ 
+                width: 1200,  
+                height: 800,  
+                deviceScaleFactor: 2  
+            });
+            
+            const url = `http://localhost:3000?symbol=${encodeURIComponent(symbol)}`;
+            console.log('Navigating to:', url);
 
-        // Enable console log from the page
-        page.on('console', msg => console.log('Browser console:', msg.text()));
+            // Enable console log from the page
+            page.on('console', msg => console.log('Browser console:', msg.text()));
 
-        // Navigate to the page and wait for network to be idle
-        const response = await page.goto(url, { 
-            waitUntil: 'networkidle0',
-            timeout: 30000 
-        });
-        
-        // 304 Not Modified is a valid response
-        if (!response.ok() && response.status() !== 304) {
-            throw new Error(`Failed to load page: ${response.status()} ${response.statusText()}`);
-        }
-        
-        console.log('Page loaded');
+            // Set longer timeouts for navigation
+            await page.setDefaultNavigationTimeout(30000);
+            await page.setDefaultTimeout(30000);
 
-        // Add a small delay to ensure React has fully rendered
-        await page.waitForTimeout(1000);
+            // Navigate to the page and wait for network to be idle
+            const response = await page.goto(url, { 
+                waitUntil: ['networkidle0', 'domcontentloaded'],
+                timeout: 30000 
+            });
+            
+            if (!response.ok() && response.status() !== 304) {
+                throw new Error(`Failed to load page: ${response.status()} ${response.statusText()}`);
+            }
+            
+            console.log('Page loaded');
 
-        // Wait for React to render and get the card element
-        await page.waitForSelector('.card-wrapper', { 
-            visible: true,
-            timeout: 10000 // 10 second timeout
-        });
-        
-        const element = await page.$('.card-wrapper');
-        
-        if (!element) {
-            throw new Error('Could not find card element');
-        }
+            // Add a small delay to ensure React has fully rendered
+            await page.waitForTimeout(2000);
 
-        const screenshotPath = path.join(screenshotsDir, `${symbol}_${Date.now()}.png`);
-        
-        console.log('Taking screenshot...');
-        await element.screenshot({
-            path: screenshotPath,
-            omitBackground: true,
-            type: 'png'    
-        });
+            // Wait for React to render and get the card element
+            await page.waitForSelector('.card-wrapper', { 
+                visible: true,
+                timeout: 20000 // 20 second timeout
+            });
+            
+            const element = await page.$('.card-wrapper');
+            
+            if (!element) {
+                throw new Error('Could not find card element');
+            }
 
-        console.log('Screenshot saved to:', screenshotPath);
-        return screenshotPath;
-    } catch (error) {
-        console.error('Screenshot error:', error);
-        if (page) {
-            console.log('Current page URL:', await page.url());
-            console.log('Page content:', await page.content());
-        }
-        throw error;
-    } finally {
-        if (page) {
-            await page.close().catch(console.error);
+            const screenshotPath = path.join(screenshotsDir, `${symbol}_${Date.now()}.png`);
+            
+            console.log('Taking screenshot...');
+            await element.screenshot({
+                path: screenshotPath,
+                omitBackground: true,
+                type: 'png',
+                timeout: 30000
+            });
+
+            console.log('Screenshot saved to:', screenshotPath);
+            return screenshotPath;
+        } catch (error) {
+            console.error(`Screenshot attempt ${4 - retries} failed:`, error);
+            retries--;
+            
+            if (retries === 0) {
+                throw error;
+            }
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        } finally {
+            if (page) {
+                await page.close().catch(console.error);
+            }
         }
     }
 }
@@ -281,56 +300,88 @@ bot.onText(/\/top/, async (msg) => {
 // Handle /market command
 bot.onText(/\/market/, async (msg) => {
     const chatId = msg.chat.id;
+    let page = null;
+    let retries = 3;
 
-    try {
-        console.log('Processing market overview request...');
-        await bot.sendMessage(chatId, '📊 Getting global market overview...');
-        
-        const page = await browser.newPage();
-        await page.setViewport({ 
-            width: 1200,
-            height: 800,
-            deviceScaleFactor: 2
-        });
+    while (retries > 0) {
+        try {
+            console.log('Processing market overview request...');
+            await bot.sendMessage(chatId, '📊 Getting global market overview...');
+            
+            page = await browser.newPage();
+            await page.setDefaultNavigationTimeout(30000);
+            await page.setDefaultTimeout(30000);
+            
+            await page.setViewport({ 
+                width: 1200,
+                height: 800,
+                deviceScaleFactor: 2
+            });
 
-        const url = 'http://localhost:3000/top';
-        console.log('Navigating to:', url);
+            const url = 'http://localhost:3000/top';
+            console.log('Navigating to:', url);
 
-        // Enable console log from the page
-        page.on('console', msg => console.log('Browser console:', msg.text()));
+            // Enable console log from the page
+            page.on('console', msg => console.log('Browser console:', msg.text()));
 
-        // Navigate to the page and wait for network to be idle
-        await page.goto(url, { waitUntil: 'networkidle0' });
-        console.log('Page loaded');
+            // Navigate to the page and wait for network to be idle
+            const response = await page.goto(url, { 
+                waitUntil: ['networkidle0', 'domcontentloaded'],
+                timeout: 30000 
+            });
+            
+            if (!response.ok() && response.status() !== 304) {
+                throw new Error(`Failed to load page: ${response.status()} ${response.statusText()}`);
+            }
+            
+            console.log('Page loaded');
 
-        // Wait for both components to render
-        await Promise.all([
-            page.waitForSelector('.grid', { visible: true }),
-            page.waitForSelector('h1', { visible: true })
-        ]);
+            // Add a delay to ensure everything is rendered
+            await page.waitForTimeout(2000);
 
-        // Take screenshot of the entire page content
-        const screenshotPath = path.join(screenshotsDir, `market_${Date.now()}.png`);
-        
-        console.log('Taking screenshot...');
-        await page.screenshot({
-            path: screenshotPath,
-            fullPage: true
-        });
+            // Wait for both components to render
+            await Promise.all([
+                page.waitForSelector('.grid', { visible: true, timeout: 20000 }),
+                page.waitForSelector('h1', { visible: true, timeout: 20000 })
+            ]);
 
-        console.log('Screenshot saved to:', screenshotPath);
-        await page.close();
-        
-        console.log('Sending photo to chat...');
-        await bot.sendPhoto(chatId, screenshotPath, {
-            caption: '🌐 Global Market Overview'
-        });
-        
-        console.log('Photo sent successfully');
-        fs.unlinkSync(screenshotPath);
-    } catch (error) {
-        console.error('Error processing /market command:', error);
-        await bot.sendMessage(chatId, 'Sorry, there was an error getting the market overview. Please try again later.');
+            // Take screenshot of the entire page content
+            const screenshotPath = path.join(screenshotsDir, `market_${Date.now()}.png`);
+            
+            console.log('Taking screenshot...');
+            await page.screenshot({
+                path: screenshotPath,
+                fullPage: true,
+                timeout: 30000
+            });
+
+            console.log('Screenshot saved to:', screenshotPath);
+            await page.close();
+            
+            console.log('Sending photo to chat...');
+            await bot.sendPhoto(chatId, screenshotPath, {
+                caption: '🌐 Global Market Overview'
+            });
+            
+            console.log('Photo sent successfully');
+            fs.unlinkSync(screenshotPath);
+            return;
+        } catch (error) {
+            console.error(`Market overview attempt ${4 - retries} failed:`, error);
+            retries--;
+            
+            if (retries === 0) {
+                console.error('Error processing /market command:', error);
+                await bot.sendMessage(chatId, 'Sorry, there was an error getting the market overview. Please try again later.');
+            } else {
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        } finally {
+            if (page) {
+                await page.close().catch(console.error);
+            }
+        }
     }
 });
 

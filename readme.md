@@ -60,7 +60,7 @@ Before starting, you'll need:
 
 3. Clone the repository:
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot
    cd pybot
    ```
 
@@ -126,7 +126,7 @@ Before starting, you'll need:
    ```bash
    mkdir -p ~/projects
    cd ~/projects
-   git clone [repository-url]
+   git clone https://github.com/iblessdeno/Crypto-price-snap-Bot
    cd pybot
    ```
 

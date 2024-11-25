@@ -62,7 +62,7 @@ A powerful cryptocurrency price tracking bot that supports both Telegram and Wha
 
 2. **Run the auto-setup script**
    ```bash
-   wget -O - https://raw.githubusercontent.com/yourusername/crypto-price-bot/main/setup.sh | bash
+   wget -O - https://raw.githubusercontent.com/iblessdeno/crypto-price-bot/main/setup.sh | bash
    ```
 
    Or manually:

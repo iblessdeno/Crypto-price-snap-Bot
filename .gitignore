@@ -64,3 +64,7 @@ ecosystem.config.js
 
 # Yarn Integrity file
 .yarn-integrity
+
+# WhatsApp session
+.wwebjs_auth/
+.wwebjs_cache/

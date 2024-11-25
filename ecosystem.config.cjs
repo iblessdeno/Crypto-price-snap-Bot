@@ -1,33 +1,34 @@
 module.exports = {
   apps: [
     {
-      name: 'crypto-web',
-      script: './server.js',
+      name: 'crypto-frontend',
+      script: 'npm',
+      args: 'start',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
       },
-      exec_mode: 'fork',
-      instances: 1,
-      node_args: '--experimental-specifier-resolution=node',
-      interpreter: 'node',
-      interpreter_args: '--es-module-specifier-resolution=node'
     },
     {
-      name: 'crypto-bot',
-      script: './telegram-bot.js',
-      env: {
-        NODE_ENV: 'production'
-      },
-      exec_mode: 'fork',
-      instances: 1,
-      exp_backoff_restart_delay: 100,
-      node_args: '--experimental-specifier-resolution=node',
+      name: 'telegram-bot',
+      script: 'telegram-bot.js',
       interpreter: 'node',
-      interpreter_args: '--es-module-specifier-resolution=node',
-      wait_ready: true,
-      kill_timeout: 3000,
-      max_memory_restart: '300M'
+      env: {
+        NODE_ENV: 'production',
+      },
+      max_memory_restart: '500M',
+      error_file: 'logs/telegram-error.log',
+      out_file: 'logs/telegram-out.log',
+    },
+    {
+      name: 'whatsapp-bot',
+      script: 'whatsapp-bot.js',
+      interpreter: 'node',
+      env: {
+        NODE_ENV: 'production',
+      },
+      max_memory_restart: '500M',
+      error_file: 'logs/whatsapp-error.log',
+      out_file: 'logs/whatsapp-out.log',
     }
-  ]
+  ],
 };

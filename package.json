@@ -8,7 +8,10 @@
     "start": "node server.js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server.js",
+    "telegram-bot": "node telegram-bot.js",
+    "whatsapp-bot": "node whatsapp-bot.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.3",

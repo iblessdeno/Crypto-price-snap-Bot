@@ -23,6 +23,14 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: Build the frontend
+echo Building frontend...
+call npm run build
+if %errorlevel% neq 0 (
+    echo Failed to build frontend!
+    exit /b 1
+)
+
 :: Check for .env file
 if not exist .env (
     echo Creating .env file...
@@ -37,10 +45,10 @@ if not exist screenshots mkdir screenshots
 
 :: Start the services
 echo Starting services...
-start cmd /k "npm run server"
+start "Frontend Server" cmd /k "npm run server"
 timeout /t 5
-start cmd /k "npm run telegram-bot"
-start cmd /k "npm run whatsapp-bot"
+start "Telegram Bot" cmd /k "npm run telegram-bot"
+start "WhatsApp Bot" cmd /k "npm run whatsapp-bot"
 
 echo Setup complete! Please check the console windows for any errors.
 echo Don't forget to:

@@ -83,7 +83,7 @@ A powerful cryptocurrency price tracking bot that supports both Telegram and Wha
 
    # Clone repository
    git clone https://github.com/iblessdeno/Crypto-price-snap-Bot.git
-   cd crypto-price-bot
+   cd Crypto-price-snap-Bot
 
    # Install dependencies
    npm install
